@@ -40,6 +40,24 @@ na_1 <- nature_analysis %>%
   filter(str_detect(claim, "1_"))
 ```
 
+Add word_count column using mutate()
+```{r}
+na_1 <- na_1 %>% 
+  mutate(word_count = str_count(na_1$text, "\\S+"))
+```
+
+#Distribution visual, geom_histogram
+```{r}
+ggplot(na_1, aes(x = word_count, fill = claim)) +
+  geom_histogram(bins = 67, color = "black") +
+  theme_wsj()+
+  theme(text = element_text(family = "Menlo-Bold", size = 12),
+        legend.title = element_text(family = "Menlo-Bold", size = 12)) +
+  labs(title = "Distribution of Claims", 
+       subtitle = "Claim 1")
+
+```
+
 Tokenize using unnest_tokens() to seprate text into words
 ```{r}
 na_1_tokenized <- na_1 %>% 
@@ -56,15 +74,55 @@ na_1_tokenized <- na_1_tokenized %>%
   filter(!words %in% stopwords("english"))
 ```
 
+#Word Cloud visual
 ```{r}
 wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = brewer.pal(12, "Paired"))
 ```
+
+```{r}
+na_1_corpus <- corpus(na_1$text)
+
+toks <- na_1_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+
+
+
 
 Super Claim 3 Climate Impacts Not Bad
 FIlter() for super claim 3
 ```{r}
 na_3 <- nature_analysis %>%
   filter(str_detect(claim, "3_"))
+```
+
+Add word_count column using mutate()
+```{r}
+na_3 <- na_3 %>% 
+  mutate(word_count = str_count(na_3$text, "\\S+"))
+```
+
+#Distribution visual, geom_histogram
+```{r}
+ggplot(na_3, aes(x = word_count, fill = claim)) +
+  geom_histogram(bins = 67, color = "black") +
+  theme_wsj()+
+  theme(text = element_text(family = "Menlo-Bold", size = 12),
+        legend.title = element_text(family = "Menlo-Bold", size = 12)) +
+  labs(title = "Distribution of Claims", 
+       subtitle = "Claim 3")
+
 ```
 
 Tokenize using unnest_tokens()
@@ -84,15 +142,61 @@ na_3_tokenized <- na_3_tokenized %>%
   filter(!words %in% c("et", "al", "2"))
 ```
 
-```{r}
+#Word cloud visual
+```{r warning=FALSE}
 wordcloud(na_3_tokenized$words, freq = na_3_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, random.color = FALSE, colors = brewer.pal(12, "Paired"))
 ```
+
+
+```{r}
+na_3_corpus <- corpus(na_3$text)
+
+toks <- na_3_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+```{r}
+na_1_bigrams <- collocations(na_1_corpus, 2)
+```
+
+
+
+
+
 
 Super Claim 5 Science/Scientist Not Reliable
 FIlter() for super claim 5
 ```{r}
 na_5 <- nature_analysis %>%
   filter(str_detect(claim, "5_"))
+```
+
+Add word_count column using mutate()
+```{r}
+na_5 <- na_5 %>% 
+  mutate(word_count = str_count(na_5$text, "\\S+"))
+```
+
+#Distribution visual, geom_histogram
+```{r}
+ggplot(na_5, aes(x = word_count, fill = claim)) +
+  geom_histogram(bins = 67, color = "black") +
+  theme_wsj()+
+  theme(text = element_text(family = "Menlo-Bold", size = 12),
+        legend.title = element_text(family = "Menlo-Bold", size = 12)) +
+  labs(title = "Distribution of Claims", 
+       subtitle = "Claim 5")
+
 ```
 
 Tokenize using unnest_tokens()
@@ -112,9 +216,32 @@ na_5_tokenzied <- na_5_tokenzied %>%
   filter(!words %in% stopwords("english"))
 ```
 
-```{r}
+```{r warning=FALSE}
 wordcloud(na_5_tokenzied$words, freq = na_5_tokenzied$n, max.words = 200, min.freq = 5, random.order = FALSE, random.color = FALSE, color = brewer.pal(12, "Paired"))
 ```
+
+
+```{r}
+na_5_corpus <- corpus(na_5$text)
+
+toks <- na_5_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+
+
+
+
 
 
 ```{r}
