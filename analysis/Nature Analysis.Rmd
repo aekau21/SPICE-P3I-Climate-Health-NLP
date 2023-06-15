@@ -1,0 +1,215 @@
+---
+title: "Nature_analysis"
+author: "Anson"
+date: "2023-06-09"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(jsonlite) # allows us to read in json files
+library(tidyverse) # allows us to do lots of data manipulation and basic data science
+library(here) # allows us to cut out long file paths (ex. "users/connor/dowloads/etc")
+library(forcats) # 
+library(tidytext) # allows us to tokenize data 
+library(dplyr) # allows us to manipulate dataframes
+library(stringr) # allows us to count the number of words in a cell
+library(quanteda) # allows us to tokenize data
+library(quanteda.textplots) # allows us to make network plots
+library(gridExtra) # allows us to combine multiple plots into 1
+library(wordcloud) # allows us to generate word clouds
+library(fmsb)
+library(plotly)
+library(ggthemes)
+```
+
+```{r}
+nature_analysis <- read_csv(here("data/training.csv"))
+```
+
+A majority of cases are 0_0, uncategorized. Some super claims have no sub sub claims at all in this set. No claims for sub claims 1_5, 1_8, 2_2, 2_4, 2_5, 3_4, 3_5, 3_6, 4_3, 5_3
+```{r}
+ggplot(nature_analysis, aes(claim)) +
+  geom_bar() +
+  #theme_wsj()+
+  theme(text = element_text(family = "Menlo-Bold", size = 12),
+        legend.title = element_text(family = "Menlo-Bold", size = 12)) 
+
+```
+
+```{r}
+nature_analysis <- nature_analysis %>% 
+  mutate(word_count = str_count(nature_analysis$text, "\\S+"))
+```
+
+```{r}
+ggplot(nature_analysis, aes(word_count, fill = claim)) +
+  geom_histogram(bins = 30, color = "black")
+```
+```{r}
+nature_analysis_tokenized <- nature_analysis %>% 
+  unnest_tokens(word, text)
+```
+
+```{r}
+nature_analysis_tokenized <- nature_analysis_tokenized %>% 
+  count(word) %>% 
+  arrange(desc(n))
+```
+
+
+Load in preposition words and convert to vector
+```{r}
+stop_word_df <- read_tsv("data/english.txt", skip = 4, col_names = FALSE)
+
+vector <- stop_word_df$X1
+```
+
+```{r}
+nature_analysis_tokenized <- nature_analysis_tokenized %>% 
+  filter(!word %in% vector)
+```
+
+```{r}
+wordcloud(nature_analysis_tokenized$word, freq = nature_analysis_tokenized$n, min.freq = 5, max.words = 200, random.order = FALSE, colors = brewer.pal(12, "Paired"))
+```
+
+```{r}
+nature_analysis_corpus <- corpus(nature_analysis$text)
+
+toks <- nature_analysis_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+```{r}
+nature_analysis_text <- nature_analysis %>% 
+  select(text)
+
+ngrams <- nature_analysis_text %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+
+ngrams <- ngrams %>% 
+ separate(bigram, c("word1", "word2"), sep = " ") 
+
+ngrams <- ngrams %>%
+  filter(!word1 %in% stop_words$word) %>%
+      filter(!word2 %in% stop_words$word)
+
+
+ngrams <- ngrams %>%
+  unite(bigram, word1, word2, sep=" ")
+
+ngrams_counts <- ngrams %>% 
+  count(bigram, sort = TRUE)
+
+```
+
+```{r}
+ngrams4 <- nature_analysis %>% 
+  unnest_tokens(fourgram, text, token = "ngrams", n = 4)
+
+
+ngrams4 <- ngrams4 %>% 
+ separate(fourgram, c("word1", "word2", "word3", "word4"), sep = " ") 
+
+ngrams4 <- ngrams4 %>%
+  filter(!word1 %in% stop_words$word) %>%
+      filter(!word2 %in% stop_words$word) %>% 
+        filter(!word3 %in% stop_words$word) %>% 
+          filter(!word4 %in% stop_words$word)
+
+
+ngrams4 <- ngrams4 %>%
+  unite(fourgram, word1, word2, word3, word4, sep=" ")
+
+ngrams4_count <- ngrams4 %>% 
+  count(fourgram, sort = TRUE)
+
+```
+
+
+
+
+
+
+
+Super Claim #1
+```{r}
+nature_analysis <- read_csv(here("data/training.csv"))
+```
+Filter() using str_detect() to select the first super claim label
+
+```{r}
+na_1 <- nature_analysis %>%
+  filter(str_detect(claim, "1_"))
+```
+
+Add word count column using mutate()
+```{r}
+na_1 <- na_1 %>% 
+  mutate(word_count = str_count(na_1$text, "\\S+"))
+```
+
+Visualize the data
+```{r}
+ggplot(na_1, aes(claim)) +
+  geom_bar() +
+  coord_flip() +
+  #theme_wsj()+
+  theme(text = element_text(family = "Menlo-Bold", size = 12),
+        legend.title = element_text(family = "Menlo-Bold", size = 12)) 
+```
+
+Distribution of word_count column
+```{r}
+ggplot(na_1, aes(x = word_count, fill = claim)) +
+  geom_histogram(bins = 67, color = "black") +
+  theme_wsj()+
+  theme(text = element_text(family = "Menlo-Bold", size = 12),
+        legend.title = element_text(family = "Menlo-Bold", size = 12)) +
+  labs(title = "Distribution of Claims", 
+       subtitle = "Claim 1")
+
+```
+
+Tokenize using unnest_tokens() and use count() to count how many times each word
+```{r}
+na_1_tokenized <- na_1 %>% 
+  unnest_tokens(words, text)
+
+na_1_tokenized <- na_1_tokenized %>% 
+  count(words) %>% 
+  arrange(desc(n))
+```
+
+Load in preposition words and convert to vector
+```{r}
+stop_word_df <- read_tsv("data/english.txt", skip = 4, col_names = FALSE)
+
+vector <- stop_word_df$X1
+```
+
+```{r}
+na_1_tokenized <- na_1_tokenized %>% 
+  filter(!words %in% stopwords("english"))
+```
+
+```{r}
+wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = brewer.pal(12, "Paired"))
+```
+
+
+
+
+
