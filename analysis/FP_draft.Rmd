@@ -27,6 +27,8 @@ library(fmsb)
 library(plotly)
 library(ggthemes)
 library(tm)
+library(syuzhet)
+library(wordcloud2)
 ```
 
 ```{r Read In}
@@ -79,7 +81,7 @@ Word Cloud 1
 wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = brewer.pal(12, "Paired"))
 ```
 
-```{r}
+```{r Frequencey Matrix 1}
 na_1_corpus <- corpus(na_1$text)
 
 toks <- na_1_corpus %>%
@@ -94,6 +96,34 @@ feat <- names(topfeatures(fcmat, 30))
 
 fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.5)
+```
+
+```{r bigram 1}
+na_1_claims <- na_1 %>% 
+  select(text)
+
+ngrams <- na_1_claims %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+
+ngrams <- ngrams %>% 
+ separate(bigram, c("word1", "word2"), sep = " ") 
+
+ngrams <- ngrams %>%
+  filter(!word1 %in% stop_words$word) %>%
+      filter(!word2 %in% stop_words$word)
+
+
+ngrams <- ngrams %>%
+  unite(bigram, word1, word2, sep=" ")
+
+ngrams_counts <- ngrams %>% 
+  count(bigram, sort = TRUE)
+```
+
+```{r Sentiment 1}
+#nrc_lexicon <- get_sentiments("nrc")
+
 ```
 
 
@@ -148,7 +178,7 @@ wordcloud(na_3_tokenized$words, freq = na_3_tokenized$n, max.words = 200, min.fr
 ```
 
 
-```{r}
+```{r Frequency Matrix 3}
 na_3_corpus <- corpus(na_3$text)
 
 toks <- na_3_corpus %>%
@@ -165,9 +195,29 @@ fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.5)
 ```
 
-```{r}
-na_1_bigrams <- collocations(na_1_corpus, 2)
+```{r bigram 3}
+na_3_claims <- na_3 %>% 
+  select(text)
+
+ngrams_3 <- na_3_claims %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+ngrams_3 <- ngrams_3 %>% 
+ separate(bigram, c("word1", "word2"), sep = " ")
+
+ngrams_3 <- ngrams_3 %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+         filter(!word2 %in% stop_words$word)
+
+ngrams_3 <- ngrams_3 %>% 
+  unite(bigrams, word1, word2, sep = " ")
+
+ngrams_3 <- ngrams_3 %>% 
+  count(bigrams, sort = TRUE)
+
 ```
+
+
 
 
 
@@ -222,7 +272,7 @@ wordcloud(na_5_tokenzied$words, freq = na_5_tokenzied$n, max.words = 200, min.fr
 ```
 
 
-```{r}
+```{r Frequency Matrix 5}
 na_5_corpus <- corpus(na_5$text)
 
 toks <- na_5_corpus %>%
@@ -239,35 +289,79 @@ fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.5)
 ```
 
+```{r bigram 5}
+na_5_claims <- na_5 %>% 
+  select(text)
+
+ngrams_5 <- na_5_claims %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+ngrams_5 <- ngrams_5 %>% 
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+ngrams_5 <- ngrams_5 %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+  filter(!word2 %in% stop_words$word)
+
+ngrams_5 <- ngrams_5 %>% 
+  unite(bigram, word1, word2, sep = " ")
+
+ngrams_5 <- ngrams_5 %>% 
+  count(bigram, sort = TRUE)
+
+```
+
+
 
 
 
 
 
 #Comparison Cloud code
-```{r}
-na_1_matrix <- as.matrix.data.frame(na_1_tokenized)
-na_3_matrix <- as.matrix.data.frame(na_3_tokenized)
-na_5_matrix <- as.matrix.data.frame(na_5_tokenzied)
+```{r prep}
+na_1_matp <- na_1_claims %>% 
+  select(text)
+
+na_3_matp <- na_3_claims %>% 
+  select(text)
+
+na_5_matp <- na_5_claims %>% 
+  select(text)
+
+na_1_matrix <- as.matrix.data.frame(na_1_matp)
+na_3_matrix <- as.matrix.data.frame(na_3_matp)
+na_5_matrix <- as.matrix.data.frame(na_5_matp)
 
 na_1_text <- apply(na_1_matrix, 1, toString)
 na_3_text <- apply(na_3_matrix, 1, toString)
 na_5_text <- apply(na_5_matrix, 1, toString)
+
+
+
+
+
+
+na_list <- list(na_1_text, na_3_text, na_5_text)
+
+na_list <- lapply(na_list, as.vector.data.frame)
+unlist(na_list)
+
 ```
+
 
 ```{r Comparison Cloud}
 if (require(tm)) {
   # Replace the following code with your own text data
-  texts <- c("na_1_text", "na_3_text", "na_5_text")
+  texts <- (na_list)
   
   # Create a corpus from the text data
   corp <- Corpus(VectorSource(texts))
   
   # Preprocess the corpus
-  #corp <- tm_map(corp, removePunctuation)
-  #corp <- tm_map(corp, content_transformer(tolower))
-  #corp <- tm_map(corp, removeNumbers)
-  #corp <- tm_map(corp, removeWords, stopwords())
+  corp <- tm_map(corp, removePunctuation)
+  corp <- tm_map(corp, content_transformer(tolower))
+  corp <- tm_map(corp, removeNumbers)
+  corp <- tm_map(corp, removeWords, stopwords())
   
   # Create the term document matrix
   term.matrix <- DocumentTermMatrix(corp)
@@ -277,15 +371,13 @@ if (require(tm)) {
   colnames(term.matrix) <- paste0("Document ", 1:ncol(term.matrix))
   
   # Generate the word cloud
-  comparison.cloud(term.matrix, max.words = 40, random.order = FALSE)
-  comparison.cloud(term.matrix, max.words = 40, random.order = FALSE,
+  comparison.cloud(term.matrix, max.words = 200, random.order = FALSE,)
+  comparison.cloud(term.matrix, max.words = 200, random.order = FALSE,
                    title.colors = c("red", "blue"), title.bg.colors = c("grey40", "grey70"))
-  comparison.cloud(term.matrix, max.words = 40, random.order = FALSE,
+  comparison.cloud(term.matrix, max.words = 200, random.order = FALSE,
                    match.colors = TRUE)
+  break
 }
 
 ```
-
-
-
 

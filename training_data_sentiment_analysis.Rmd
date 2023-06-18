@@ -1,0 +1,158 @@
+---
+title: "training_data_sentiment_analysis"
+output: html_document
+date: "2023-06-16"
+---
+
+# Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(syuzhet) # allows use of sentiment analysis functions
+library(ggplot2) # allows use of ggplot functions
+library(jsonlite) # allows us to read json files
+library(dplyr) # allows use of pipe operator
+library(tidyverse) # allows us to do lots of fundamental data science tasks (ex. read_csv)
+library(tidytext) # fixes loading nrc chunk 
+library(here) # allows us to cut out long file paths (ex. "users/connor/dowloads/etc")
+```
+
+# Import "training.csv" file
+```{r}
+training_data <- read_csv(here("data/training.csv"))
+head(training_data)
+```
+
+# Create vector from text column
+```{r}
+training_vector <- as.character(training_data$text)
+head(training_vector)
+```
+# Run NRC sentiment analysis function on training data
+```{r}
+training_sentiment <- get_nrc_sentiment(training_vector)
+head(training_sentiment)
+```
+
+# Sum sentiment analysis scores
+```{r}
+training_sentiment_score <- data.frame(colSums(training_sentiment[,]))
+head(training_sentiment_score)
+```
+
+# Fix rows and columns for barplot
+```{r}
+# Viz Prep 1
+names(training_sentiment_score) <- 'score'
+names(training_sentiment_score)
+
+# Viz Prep 2
+training_sentiment_score <- cbind("sentiment"=rownames(training_sentiment_score), training_sentiment_score)
+names(training_sentiment_score)
+
+# Viz Prep 3
+rownames(training_sentiment_score) <- NULL
+
+training_sentiment_score
+```
+
+# Create first visual
+```{r}
+ggplot(data=training_sentiment_score, aes(x=sentiment, y=score)) +
+  geom_bar(aes(fill=sentiment), stat="identity") +
+  theme(legend.position="none") +
+  xlab("Sentiments") +
+  ylab("Scores") +
+  ggtitle("Sentiment Analysis on Training Data")
+```
+
+# Remove positive and negative sentiment from x axis
+```{r}
+training_sentiment_score_edited <- training_sentiment_score[1:8,]
+training_sentiment_score_edited
+```
+
+# Rerun Visualization Code
+```{r}
+
+ggplot(data=training_sentiment_score_edited, aes(x=sentiment, y=score))+
+  geom_bar(aes(fill=sentiment), stat="identity") +
+  theme(legend.position="none")+
+  xlab("Sentiments")+
+  ylab("Scores")+
+  ggtitle("Sentiment Analysis on Training Data")
+```
+
+# JUMP: Break up vector into sentences vector
+```{r}
+training_sentences <- get_sentences(training_vector)
+head(training_sentences)
+```
+
+# Run sentiment analysis function
+```{r}
+training_sentences_sentiment <- get_sentiment(training_sentences)
+head(training_sentences_sentiment)
+```
+
+# Stats on sentiment
+```{r}
+print("Overall emotional valence in text, positive number indicates positive text")
+sum(training_sentences_sentiment)
+print("Mean above zero indicates average positive emotional valence")
+mean(training_sentences_sentiment)
+print("Summary stats of emotional valence")
+summary(training_sentences_sentiment)
+```
+
+# Plot emotional valence over narrative time, not useful over long texts
+```{r}
+plot(
+  training_sentences_sentiment, 
+  type="h", 
+  main="Example Plot Trajectory", 
+  xlab = "Narrative Time", 
+  ylab= "Emotional Valence"
+  )
+```
+
+# Remove noise from plot using get_percentage_values function
+```{r}
+percent_vals <- get_percentage_values(training_sentences_sentiment, bins = 10)
+plot(
+  percent_vals, 
+  type="l", 
+  main="Training Data Using Percentage-Based Means", 
+  xlab = "Narrative Time", 
+  ylab= "Emotional Valence", 
+  col="red"
+  )
+```
+
+# Changing the "bins" argument, you can control how many bins the sentences are divided into.
+```{r}
+percent_vals_20 <- get_percentage_values(training_sentences_sentiment, bins = 20)
+plot(
+  percent_vals_20, 
+  type="l", 
+  main="Training Data Using Percentage-Based Means", 
+  xlab = "Narrative Time", 
+  ylab= "Emotional Valence", 
+  col="red"
+  )
+```
+
+# Get transformed values using get_dct_transform function
+```{r}
+dct_values <- get_dct_transform(
+      training_sentences_sentiment, 
+      low_pass_size = 5, 
+      x_reverse_len = 100,
+      scale_vals = F,
+      scale_range = T
+      )
+```
+
+```{r}
+
+```
+
