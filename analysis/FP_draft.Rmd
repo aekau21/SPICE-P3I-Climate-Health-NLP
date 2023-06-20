@@ -2,7 +2,9 @@
 title: "FP Draft 1"
 author: "Anson"
 date: "2023-06-14"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 Goal: Compare super claims 1, 3, and 5. 
 1 : Not Happening 
@@ -49,7 +51,7 @@ na_1 <- na_1 %>%
 ```
 
 Distribution visual, geom_histogram
-```{r Histogram 1}
+```{r Histogram 1, eval=FALSE, include=FALSE}
 ggplot(na_1, aes(x = word_count, fill = claim)) +
   geom_histogram(bins = 67, color = "black") +
   theme_wsj()+
@@ -78,7 +80,7 @@ na_1_tokenized <- na_1_tokenized %>%
 
 Word Cloud 1
 ```{r Word Cloud 1, warning=FALSE}
-wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = brewer.pal(12, "Paired"))
+wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = brewer.pal(9, "GnBu"), )
 ```
 
 ```{r Frequencey Matrix 1}
@@ -144,7 +146,7 @@ na_3 <- na_3 %>%
 ```
 
 Distribution visual, geom_histogram
-```{r Histogram 3}
+```{r Histogram 3, eval=FALSE, include=FALSE}
 ggplot(na_3, aes(x = word_count, fill = claim)) +
   geom_histogram(bins = 67, color = "black") +
   theme_wsj()+
@@ -238,7 +240,7 @@ na_5 <- na_5 %>%
 ```
 
 Distribution visual, geom_histogram
-```{r Histogram 3}
+```{r Histogram 5, eval=FALSE, include=FALSE}
 ggplot(na_5, aes(x = word_count, fill = claim)) +
   geom_histogram(bins = 67, color = "black") +
   theme_wsj()+
@@ -349,7 +351,7 @@ unlist(na_list)
 ```
 
 
-```{r Comparison Cloud}
+```{r Comparison Cloud, eval=FALSE, include=FALSE}
 if (require(tm)) {
   # Replace the following code with your own text data
   texts <- (na_list)
@@ -380,4 +382,5 @@ if (require(tm)) {
 }
 
 ```
+
 
