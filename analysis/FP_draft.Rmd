@@ -31,6 +31,8 @@ library(ggthemes)
 library(tm)
 library(syuzhet)
 library(wordcloud2)
+library(plotrix)
+
 ```
 
 ```{r Read In}
@@ -80,7 +82,9 @@ na_1_tokenized <- na_1_tokenized %>%
 
 Word Cloud 1
 ```{r Word Cloud 1, warning=FALSE}
-wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = brewer.pal(9, "GnBu"), )
+wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = c("royalblue1","seagreen2", "orangered"), family = "Avenir", borderColor = "yellow", )
+
+#brewer.pal(9, "GnBu"
 ```
 
 ```{r Frequencey Matrix 1}
@@ -123,10 +127,16 @@ ngrams_counts <- ngrams %>%
   count(bigram, sort = TRUE)
 ```
 
+```{r}
+#word_associate(na_1$text, match.string = c("climate"), stopwords = stop_words$word, network.plot = TRUE, cloud.colors = c("gray85", "darkred"))
+```
+
 ```{r Sentiment 1}
 #nrc_lexicon <- get_sentiments("nrc")
 
 ```
+
+
 
 
 
@@ -312,6 +322,70 @@ ngrams_5 <- ngrams_5 %>%
   count(bigram, sort = TRUE)
 
 ```
+
+
+
+
+
+
+
+```{r}
+cw_1_5 <- full_join(na_1_tokenized, na_3_tokenized, by = "words") 
+
+commonwords <- subset (cw_1_5, cw_1_5[, 2] > 0 & cw_1_5[, 3] > 0)
+
+#commonwords <- commonwords %>%
+  #arrange(desc(n.x))
+
+difference <- abs(commonwords[, 2] - commonwords[, 3])
+
+commonwords <- cbind(commonwords, difference)
+commonwords <- commonwords[order (commonwords[, 4],
+decreasing = TRUE), ]
+top25_df <- data.frame(x = commonwords [1:25, 1],
+y = commonwords [1:25, 2],
+labels = rownames (commonwords [1:25, ]))
+
+colnames(top25_df) <- c("labels", "x", "y")
+
+top25_df$x <- as.numeric(top25_df$x)
+top25_df$y <- as.numeric(top25_df$y)
+
+pyramid.plot(top25_df$x, top25_df$y,
+             labels = top25_df$labels,
+             main = "Words in Common",
+             gap = 8)
+
+
+```
+```{r}
+cw_1_5 <- full_join(na_1_tokenized, na_3_tokenized, by = "words") 
+
+commonwords <- subset (cw_1_5, cw_1_5[, 2] > 0 & cw_1_5[, 3] > 0)
+
+commonwords <- commonwords[1:39, ]
+
+difference <- abs(commonwords[, 2] - commonwords[, 3])
+
+commonwords <- cbind(commonwords, difference)
+commonwords <- commonwords[order (commonwords[, 4],
+decreasing = TRUE), ]
+
+top25_df <- data.frame(x = commonwords [1:25, 1],
+y = commonwords [1:25, 2],
+labels = rownames (commonwords [1:25, ]))
+
+colnames(top25_df) <- c("labels", "x", "y")
+
+top25_df$x <- as.numeric(top25_df$x)
+top25_df$y <- as.numeric(top25_df$y)
+
+pyramid.plot(top25_df$x, top25_df$y,
+             labels = top25_df$labels,
+             main = "Words in Common",
+             gap = 8)
+```
+
 
 
 
