@@ -366,12 +366,12 @@ na_5_claims_sentiment_score <- data.frame(colSums(na_5_claims_sentiment[,]))
 
 names(na_5_claims_sentiment_score) <- 'score'
 
-na_5_claims_sentiment_score <- cbind("Sentiment" = rownames(na_5_claims_sentiment_score), na_5_claims_sentiment_score)
+na_5_claims_sentiment_score <- cbind("sentiment" = rownames(na_5_claims_sentiment_score), na_5_claims_sentiment_score)
 
 rownames(training_sentiment_score) <- NULL
 
-ggplot(na_5_claims_sentiment_score, aes(Sentiment, score)) +
-  geom_bar(aes(fill = Sentiment), stat = "identity") +
+ggplot(na_5_claims_sentiment_score, aes(sentiment, score)) +
+  geom_bar(aes(fill = sentiment), stat = "identity") +
   labs(x = "Sentiment", y = "Score", title = "Sentiment for Super Claim 5")
 
 ```
@@ -381,7 +381,28 @@ ggplot(na_5_claims_sentiment_score, aes(Sentiment, score)) +
 
 
 
-#New Plots
+#Comparison Plots
+
+#GGPPLOT comparisons
+
+```{r}
+united_sent_score <- full_join(na_1_sentiment_score, na_3_sentiment_score, by = "sentiment") %>% 
+  full_join(na_5_claims_sentiment_score, by = "sentiment") %>% rename(claim_1 = score.x, claim_3 = score.y, claim_5 = score) #%>% 
+ #transmute(sentiment, score = score.x + score.y + score)
+
+```
+
+```{r Sentiment Distribution}
+ggplot(united_sent_score, aes(x = sentiment)) +
+  geom_col(aes(y = claim_5, fill = "claim_5"), position = "stack") +
+  geom_col(aes(y = claim_1, fill = "claim_1"), position = "stack") +
+  geom_col(aes(y = claim_3, fill = "claim_3"), position = "stack") +
+  scale_fill_manual(values = c("claim_5" = "#ECB713", "claim_1" = "#B713EC", "claim_3" = "#13ECB7")) +
+  theme(text = element_text(family = "Avenir Next", size = 21), axis.text.y = element_text(family = "Avenir Next", size = 21), axis.title = element_text(family = "Avenir Next", size = 21)) +
+  labs(x = "Sentiment", y = "Score", title = "Sentiment Scores for Super Claims 1, 3, & 5", fill = "Claim")
+```
+
+
 #Pyramid Plot
 
 
@@ -410,7 +431,7 @@ sentiment_1_3 <- sentiment_1_3 %>%
 ```
 
 ```{r Pyramid Plot 1 +3  & 5}
-pyramid.plot(sentiment_1_3$Score, na_5_claims_sentiment_score$score, labels = na_5_claims_sentiment_score$Sentiment, main = "Sentiment Comparison for Combined Claims 1 + 3 & 5", top.labels = c("Super Claim 1 & 3", "Sentiment", "Super Claim 5: Science/Scientist Not Reliable"), gap = 500, show.values = TRUE, unit = "Score")
+pyramid.plot(sentiment_1_3$Score, na_5_claims_sentiment_score$score, labels = na_5_claims_sentiment_score$sentiment, main = "Sentiment Comparison for Combined Claims 1 + 3 & 5", top.labels = c("Super Claim 1 & 3", "Sentiment", "Super Claim 5: Science/Scientist Not Reliable"), gap = 500, show.values = TRUE, unit = "Score")
 ```
 
 
