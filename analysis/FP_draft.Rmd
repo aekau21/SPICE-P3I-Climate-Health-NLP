@@ -80,6 +80,14 @@ na_1_tokenized <- na_1_tokenized %>%
   filter(!words %in% stopwords("english"))
 ```
 
+```{r eval=FALSE, include=FALSE}
+na_1_wc <- na_1_tokenized %>% 
+  select(words)
+
+write_csv(na_1_wc, here("analysis/na_1_wc.csv"))
+```
+
+
 Word Cloud 1
 ```{r Word Cloud 1, warning=FALSE}
 wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = c("royalblue1","seagreen2", "orangered"), family = "Avenir")
@@ -387,6 +395,22 @@ pyramid.plot(na_1_sentiment_score$score, na_5_claims_sentiment_score$score, labe
 
 ```{r Pyramid Plot Claims 3 & 5}
 pyramid.plot(na_3_sentiment_score$score, na_5_claims_sentiment_score$score, labels = na_3_sentiment_score$sentiment, main = "Sentiment Comparison for Claims 3 and 5", top.labels = c("Super Claim 3: CC is Not Bad", "Sentiment", "Super Claim 5: Science/Scientist Not Reliable"), gap = 450, show.values = TRUE, unit = "Score")
+```
+
+```{r Combining Claims 1 & 3}
+
+sentiment_1_3 <- right_join(na_1_sentiment_score, na_3_sentiment_score, by = "sentiment", keep = TRUE)
+
+sentiment_1_3 <- sentiment_1_3 %>% 
+  select(sentiment.x, score.x, score.y) %>% 
+  rename(Sentiment = sentiment.x, Score_1 = score.x, Score_3 = score.y) %>%
+  ungroup() %>% 
+ transmute(Sentiment, Score = Score_1 + Score_3)
+
+```
+
+```{r Pyramid Plot 1 +3  & 5}
+pyramid.plot(sentiment_1_3$Score, na_5_claims_sentiment_score$score, labels = na_5_claims_sentiment_score$Sentiment, main = "Sentiment Comparison for Combined Claims 1 + 3 & 5", top.labels = c("Super Claim 1 & 3", "Sentiment", "Super Claim 5: Science/Scientist Not Reliable"), gap = 500, show.values = TRUE, unit = "Score")
 ```
 
 
