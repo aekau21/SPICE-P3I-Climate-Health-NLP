@@ -1,0 +1,310 @@
+---
+title: "Climate-FEVER Analysis"
+author: "SPICE 2023"
+date: "5/30/2023"
+output: html_document
+---
+
+This code chunk is where we load in all of the packages that we will use in this script using library(packagename)
+
+- Packages allow us to interact with our data through the use of functions -> function(data)
+
+- If you get the error: "package "packagename" does not exist":
+  - You need to install this package using install.packages("packagename") in the console below
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(jsonlite) # allows us to read in json files
+library(tidyverse) # allows us to do lots of data manipulation and basic data science
+library(here) # allows us to cut out long file paths (ex. "users/connor/dowloads/etc")
+library(forcats) # 
+library(tidytext) # allows us to tokenize data 
+library(dplyr) # allows us to manipulate dataframes
+library(stringr) # allows us to count the number of words in a cell
+library(quanteda) # allows us to tokenize data
+library(quanteda.textplots) # allows us to make network plots
+library(gridExtra) # allows us to combine multiple plots into 1
+library(wordcloud) # allows us to generate word clouds
+```
+
+Here is where we read in out data
+
+- Since this file is a .jsonl file (oppoese to .csv or .xlsx) we use the function stream_in from the jsonlite package
+
+- We use here to cut out the long file paths and start within our R project
+  - Within our project, the data is in the data folder so we direct our computer to the file with "data/dataset_name"
+  
+  
+- [Data Source](http://climatefever.ai/)
+
+- [Dataset Paper](https://www.sustainablefinance.uzh.ch/en/research/climate-fever.html)
+
+After you run the chunk below successfully, a dataframe called climate_fever should appear in your environment tab
+
+- You should click on it to view the dataframe
+
+```{r, message=FALSE, warning=FALSE}
+climate_fever <- stream_in(file(here("data/climate-fever-dataset-r1.jsonl")))
+```
+
+
+Open the dataframe and look at the claim_label column
+
+- What are the possible values in this column?
+
+```{r}
+unique(climate_fever$claim_label)
+```
+
+Once we use the unique function unique(dataframe_name$dataframe_column) to find the unique values in the dataframe, we can see there are 4 unique values
+
+What are the proportions of each of these values in the column?
+
+```{r}
+table(climate_fever$claim_label)
+```
+
+Looks like the most common value in this column is SUPPORTS and the leat common value is DISPUTED
+
+Let's make a bar graph of this information
+
+- We'll start with the most basic bar graph using ggplot
+  - ggplot requires the dataframe name we want to plot and one column (or 2-3) of information we want to plot, followed by what kind of plot we want to make
+  
+```{r}
+ggplot(data = climate_fever, aes(x = claim_label)) +
+  geom_bar()
+```
+
+Here is our information visualized, congrats on your first plot of SPICE!!
+
+Let's make this a little bit nicer
+
+
+```{r}
+ggplot(data = climate_fever, aes(x = fct_rev(fct_infreq(claim_label))))+
+  geom_bar(fill = "steelblue", color = "black") +
+  theme_minimal() +
+  coord_flip() +
+  labs(y = "Number of Claims", x = "Type of Claim", title = "Number of Claims by Type - Climate Fever")
+```
+
+Now, look at the column claim
+
+- Here we see claims about climate change
+
+- How many words are in these claims?
+  - First we need to add a new column that calculates the number of words in each claim
+    - We will use the tidyverse package to add a new column with mutate() and then use the stringr package to count the number of words
+  
+```{r}
+climate_fever <- climate_fever %>% 
+  mutate(word_count = str_count(climate_fever$claim, "\\S+"))
+```
+  
+
+Now look at the climate_fever dataframe and there should be a new column called word_count
+
+With this column we can now plot the frequency of the number of words in a claim with a histogram
+
+To practice add a title, x axis label, and y axis label to this plot
+
+```{r}
+ggplot(climate_fever, aes(x = word_count)) +
+  geom_histogram(bins = 67, fill = "steelblue", color = "black") +
+  theme_minimal()
+```
+
+Does the number of words in a claim correlate with the claim label?
+
+Let's color the plot by claim_label to find out
+
+```{r}
+ggplot(climate_fever, aes(x = word_count, fill = claim_label)) +
+  geom_histogram(bins = 67, color = "black") +
+  theme_minimal()
+```
+
+Now let's look more into the specific language of the claims
+
+Tokenize - break the claims down by word (~31,000 words)
+
+```{r}
+climate_fever_tokenized <- climate_fever%>% 
+  unnest_tokens(word, claim)
+```
+
+Count the number of times each word appears
+
+```{r}
+climate_fever_tokenized <- climate_fever_tokenized %>% 
+  count(word) %>% 
+  arrange(desc(n))
+```
+
+
+We see lots of prepositions at the top of the list
+- Since these words don't have much meaning, let's filter them out
+- There's many way to do this
+  - Here is the most basic:
+  
+Create a stop words object of words that don't hold much meaning to our analysis
+- This is just a few
+
+```{r}
+stop_word_list <- c("the", "of", "a", "is", "in", "to", "and", "that", "from", "on", "with", "by", "for")
+```
+
+
+Filter the dataset for words that are not in the stop list
+
+
+```{r}
+climate_fever_tokenized <- climate_fever_tokenized %>% 
+  filter(!word %in% stop_word_list)
+```
+
+
+Create a Word Cloud
+
+```{r}
+wordcloud(words = climate_fever_tokenized$word, freq = climate_fever_tokenized$n, min.freq = 5,           max.words=200, random.order=FALSE, rot.per=0.35,            colors=brewer.pal(8, "Dark2"))
+```
+Now, let's look further into how the words in these claims are used together by creating a network of feature co-occurences
+
+
+Whole Dataset
+
+```{r}
+climate_fever_corpus <- corpus(climate_fever$claim)
+
+toks <- climate_fever_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+The network plot above gives us more insight into how words are being used together
+
+
+Would a network plot subset on the claims that refute climate change look different than this?
+
+Refuting Claims
+
+```{r}
+climate_fever_refute <- climate_fever %>% 
+  filter(claim_label == "REFUTES")
+
+climate_fever_refute_corpus <- corpus(climate_fever_refute$claim)
+
+toks_refute <- climate_fever_refute_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+fcmat_refute <- fcm(toks_refute, context = "window", tri = FALSE)
+feat_refute <- names(topfeatures(fcmat_refute, 30))
+network_refute <- fcm_select(fcmat_refute, pattern = feat_refute) %>%
+    textplot_network(min_freq = 0.5)
+network_refute
+```
+
+
+Let's do another network plot only for the claims that support climate change
+
+Supporting Claims
+
+```{r}
+climate_fever_support <- climate_fever %>% 
+  filter(claim_label == "SUPPORTS")
+
+climate_fever_support_corpus <- corpus(climate_fever_support$claim)
+
+toks_support <- climate_fever_support_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+fcmat_support <- fcm(toks_support, context = "window", tri = FALSE)
+feat_support <- names(topfeatures(fcmat_support, 30))
+network_support <- fcm_select(fcmat_support, pattern = feat_support) %>%
+    textplot_network(min_freq = 0.5)
+network_support
+
+```
+
+
+To more easily compare the 2 network plots (support claims vs refute claims), let's put them both on the same plot using grid.arrange
+
+
+```{r}
+grid.arrange(network_support, network_refute, ncol=2)
+```
+Few takeaways:
+
+- human-emissions found in support not refute
+
+- data found in only refute
+
+- ipcc found in only refute
+
+Now let's look deeper into the lingustics of the claims with Ngrams
+
+```{r}
+climate_fever_claims <- climate_fever %>% 
+  select(claim)
+
+ngrams <- climate_fever_claims %>% 
+  unnest_tokens(bigram, claim, token = "ngrams", n = 2)
+
+
+ngrams <- ngrams %>% 
+ separate(bigram, c("word1", "word2"), sep = " ") 
+
+ngrams <- ngrams %>%
+  filter(!word1 %in% stop_words$word) %>%
+      filter(!word2 %in% stop_words$word)
+
+
+ngrams <- ngrams %>%
+  unite(bigram, word1, word2, sep=" ")
+
+ngrams_counts <- ngrams %>% 
+  count(bigram, sort = TRUE)
+
+head(ngrams_counts)
+```
+
+
+4Grams
+
+```{r}
+ngrams4 <- climate_fever_claims %>% 
+  unnest_tokens(fourgram, claim, token = "ngrams", n = 4)
+
+
+ngrams4 <- ngrams4 %>% 
+ separate(fourgram, c("word1", "word2", "word3", "word4"), sep = " ") 
+
+ngrams4 <- ngrams4 %>%
+  filter(!word1 %in% stop_words$word) %>%
+      filter(!word2 %in% stop_words$word) %>% 
+        filter(!word3 %in% stop_words$word) %>% 
+          filter(!word4 %in% stop_words$word)
+
+
+ngrams4 <- ngrams4 %>%
+  unite(fourgram, word1, word2, word3, word4, sep=" ")
+
+ngrams4_count <- ngrams4 %>% 
+  count(fourgram, sort = TRUE)
+
+head(ngrams4_count)
+```
+
