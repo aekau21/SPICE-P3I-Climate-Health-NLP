@@ -156,7 +156,7 @@ dark_color_palette <- sapply(color_palette, function(color) {
 })
 
 # Use the modified color palette in the wordcloud function
-wordcloud(ngrams_5$bigram, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, 
+wordcloud(ngrams_5$bigram, freq = na_5_tokenized$n, max.words = 200, min.freq = 5, 
           random.order = FALSE, colors = dark_color_palette, family = "Avenir")
 
 ```
