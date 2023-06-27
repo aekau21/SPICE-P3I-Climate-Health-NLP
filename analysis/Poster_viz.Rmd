@@ -20,12 +20,12 @@ library(gridExtra) # allows us to combine multiple plots into 1
 library(wordcloud) # allows us to generate word clouds
 library(fmsb)
 library(plotly)
-library(ggthemes)
-library(tm)
-library(syuzhet)
-library(wordcloud2)
-library(plotrix)
-library(RColorBrewer)
+library(ggthemes) # more themes for ggplot
+library(tm) #for textmining corpus(), removePunctuation()
+library(syuzhet) # for sentiment analysis, getNrc()
+library(wordcloud2) # for comparison clouds 
+library(plotrix) # for pyramid plots
+library(RColorBrewer) # for more color palettes
 
 ```
 
