@@ -151,10 +151,6 @@ ggplot(na_1_sentiment_score, aes(x = sentiment, y = score)) +
 
 
 
-
-
-
-
 #Super Claim 3 Climate Impacts Not Bad
 FIlter() for super claim 3
 ```{r}
@@ -262,10 +258,8 @@ ggplot(na_3_sentiment_score, aes(x = sentiment, y = score)) +
 
 
 
-
-
 #Super Claim 5 Science/Scientist Not Reliable
-FIlter() for super claim 5
+Filter() for super claim 5
 ```{r}
 na_5 <- nature_analysis %>%
   filter(str_detect(claim, "5_"))
@@ -291,10 +285,10 @@ ggplot(na_5, aes(x = word_count, fill = claim)) +
 
 Tokenize using unnest_tokens()
 ```{r}
-na_5_tokenzied <- nature_analysis %>% 
+na_5_tokenized <- nature_analysis %>% 
   unnest_tokens(words, text)
 
-na_5_tokenzied <- na_5_tokenzied %>% 
+na_5_tokenized <- na_5_tokenized %>% 
   count(words) %>% 
   arrange(desc(n))
   
@@ -302,13 +296,13 @@ na_5_tokenzied <- na_5_tokenzied %>%
 
 Filter() out stopwords()
 ```{r}
-na_5_tokenzied <- na_5_tokenzied %>% 
+na_5_tokenized <- na_5_tokenized %>% 
   filter(!words %in% stopwords("english"))
 ```
 
 Word Cloud 5
 ```{r Word Cloud 5, warning=FALSE}
-wordcloud(na_5_tokenzied$words, freq = na_5_tokenzied$n, max.words = 200, min.freq = 5, random.order = FALSE, random.color = FALSE, color = brewer.pal(12, "Paired"))
+wordcloud(na_5_tokenized$words, freq = na_5_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, random.color = FALSE, color = brewer.pal(12, "Paired"))
 ```
 
 
@@ -361,7 +355,7 @@ names(na_5_claims_sentiment_score) <- 'score'
 
 na_5_claims_sentiment_score <- cbind("sentiment" = rownames(na_5_claims_sentiment_score), na_5_claims_sentiment_score)
 
-rownames(training_sentiment_score) <- NULL
+#rownames(training_sentiment_score) <- NULL
 
 ggplot(na_5_claims_sentiment_score, aes(sentiment, score)) +
   geom_bar(aes(fill = sentiment), stat = "identity") +
@@ -369,12 +363,188 @@ ggplot(na_5_claims_sentiment_score, aes(sentiment, score)) +
 
 ```
 
+#Super Claim 5_1
+Filter() for super claim 5
+```{r}
+na_5_1 <- nature_analysis %>%
+  filter(str_detect(claim, "5_1"))
+```
+
+Add word_count column using mutate()
+```{r}
+na_5_1 <- na_5_1 %>% 
+  mutate(word_count = str_count(na_5_1$text, "\\S+"))
+```
+
+Tokenize using unnest_tokens()
+```{r}
+na_5_1_tokenized <- nature_analysis %>% 
+  unnest_tokens(words, text)
+
+na_5_1_tokenized <- na_5_1_tokenized %>% 
+  count(words) %>% 
+  arrange(desc(n))
+  
+```
+
+Filter() out stopwords()
+```{r}
+na_5_1_tokenized <- na_5_1_tokenized %>% 
+  filter(!words %in% stopwords("english"))
+```
+
+```{r Word Cloud 5_1, warning=FALSE}
+wordcloud(na_5_1_tokenized$words, freq = na_5_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, random.color = FALSE, color = brewer.pal(12, "Paired"))
+```
+
+```{r frequencey matrix 5_1}
+na_5_1_corpus <- corpus(na_5_1$text)
+
+toks <- na_5_1_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+```{r bigram 5_1}
+na_5_1_claims <- na_5_1 %>% 
+  select(text)
+
+ngrams_5_1 <- na_5_1_claims %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+ngrams_5_1 <- ngrams_5_1 %>% 
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+ngrams_5_1 <- ngrams_5_1 %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+  filter(!word2 %in% stop_words$word)
+
+ngrams_5_1 <- ngrams_5_1 %>% 
+  unite(bigram, word1, word2, sep = " ")
+
+ngrams_5_1 <- ngrams_5_1 %>% 
+  count(bigram, sort = TRUE)
+
+```
+
+```{r Sentiment 5_1}
+na_5_1_claims_vector <- as.character(na_5_1_claims$text)
+na_5_1_claims_sentiment <- get_nrc_sentiment(na_5_1_claims_vector)
+
+na_5_1_claims_sentiment_score <- data.frame(colSums(na_5_1_claims_sentiment[,]))
+
+names(na_5_1_claims_sentiment_score) <- 'score'
+
+na_5_1_claims_sentiment_score <- cbind("sentiment" = rownames(na_5_1_claims_sentiment_score), na_5_1_claims_sentiment_score)
+
+#rownames(training_sentiment_score) <- NULL
+
+ggplot(na_5_1_claims_sentiment_score, aes(sentiment, score)) +
+  geom_bar(aes(fill = sentiment), stat = "identity") +
+  labs(x = "Sentiment", y = "Score", title = "Sentiment for Super Claim 5_1")
+```
+
+#Super Claim 5_2
+Filter() for super claim 5
+```{r}
+na_5_2 <- nature_analysis %>%
+  filter(str_detect(claim, "5_2"))
+```
+
+Add word_count column using mutate()
+```{r}
+na_5_2 <- na_5_2 %>% 
+  mutate(word_count = str_count(na_5_2$text, "\\S+"))
+```
+
+Tokenize using unnest_tokens()
+```{r}
+na_5_2_tokenized <- nature_analysis %>% 
+  unnest_tokens(words, text)
+
+na_5_2_tokenized <- na_5_2_tokenized %>% 
+  count(words) %>% 
+  arrange(desc(n))
+  
+```
+
+Filter() out stopwords()
+```{r}
+na_5_2_tokenized <- na_5_2_tokenized %>% 
+  filter(!words %in% stopwords("english"))
+```
+
+```{r Word Cloud 5_2, warning=FALSE}
+wordcloud(na_5_2_tokenized$words, freq = na_5_2_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, random.color = FALSE, color = brewer.pal(12, "Paired"))
+```
+
+```{r frequencey matrix 5_2}
+na_5_2_corpus <- corpus(na_5_2$text)
+
+toks <- na_5_2_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
+```{r bigram 5_2}
+na_5_2_claims <- na_5_2 %>% 
+  select(text)
+
+ngrams_5_2 <- na_5_2_claims %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+ngrams_5_2 <- ngrams_5_2 %>% 
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+ngrams_5_2 <- ngrams_5_2 %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+  filter(!word2 %in% stop_words$word)
+
+ngrams_5_2 <- ngrams_5_2 %>% 
+  unite(bigram, word1, word2, sep = " ")
+
+ngrams_5_2 <- ngrams_5_2 %>% 
+  count(bigram, sort = TRUE)
+
+```
+
+```{r Sentiment 5_2}
+na_5_2_claims_vector <- as.character(na_5_2_claims$text)
+na_5_2_claims_sentiment <- get_nrc_sentiment(na_5_2_claims_vector)
+
+na_5_2_claims_sentiment_score <- data.frame(colSums(na_5_2_claims_sentiment[,]))
+
+names(na_5_2_claims_sentiment_score) <- 'score'
+
+na_5_2_claims_sentiment_score <- cbind("sentiment" = rownames(na_5_2_claims_sentiment_score), na_5_2_claims_sentiment_score)
+
+#rownames(training_sentiment_score) <- NULL
+
+ggplot(na_5_2_claims_sentiment_score, aes(sentiment, score)) +
+  geom_bar(aes(fill = sentiment), stat = "identity") +
+  labs(x = "Sentiment", y = "Score", title = "Sentiment for Super Claim 5_2")
+```
 
 
 
-
-
-#Comparison Plots
 
 #GGPPLOT comparisons
 ```{r}
@@ -410,25 +580,17 @@ wordcloud(ngrams_3$bigrams, freq = na_3_tokenized$n, max.words = 200, min.freq =
 ```
 
 ```{r Bigram Cloud 5, warning=FALSE}
-wordcloud(ngrams_5$bigram, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
+wordcloud(ngrams_5$bigram, freq = na_5_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
 
 ```
 
-```{r Bigram Cloud 5 dark, warning=FALSE}
-# Select the desired color palette
-color_palette <- brewer.pal(9, "GnBu")
+```{r Bigram Cloud 5_1, warning=FALSE}
+wordcloud(ngrams_5_1$bigram, freq = na_5_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
 
-# Darken the colors by multiplying RGB values by 0.8
-dark_color_palette <- sapply(color_palette, function(color) {
-  rgb <- col2rgb(color)
-  darker_rgb <- rgb * .8
-  rgb(darker_rgb[1], darker_rgb[2], darker_rgb[3], maxColorValue = 255)
-})
+```
 
-# Use the modified color palette in the wordcloud function
-wordcloud(ngrams_5$bigram, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, 
-          random.order = FALSE, colors = dark_color_palette, family = "Avenir")
-
+```{r Bigram Cloud 5_2, warning=FALSE}
+wordcloud(ngrams_5_2$bigram, freq = na_5_2_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
 ```
 
 #Pyramid Plot
@@ -459,6 +621,12 @@ sentiment_1_3 <- sentiment_1_3 %>%
 ```{r Pyramid Plot 1 +3  & 5}
 pyramid.plot(sentiment_1_3$Score, na_5_claims_sentiment_score$score, labels = na_5_claims_sentiment_score$sentiment, main = "Sentiment Comparison for Combined Claims 1 + 3 & 5", top.labels = c("Super Claim 1 & 3", "Sentiment", "Super Claim 5: Science/Scientist Not Reliable"), gap = 500, show.values = TRUE, unit = "Score")# color = brewer.pal(12, "YlGnBu"))
 ```
+
+```{r Pyramid Plot 5_1 & 5_2}
+pyramid.plot(na_5_1_claims_sentiment_score$score, na_5_2_claims_sentiment_score$score, labels = na_5_1_claims_sentiment_score$sentiment, main = "Sentiment Comparison for Super Claim 5", top.labels = c("Super Claim 5_1:Science is Unreliable", "Sentiment", "Super Claim 5_2:Movement is Unreliable"), gap = 450, show.values = TRUE, unit = "Score")
+```
+
+
 
 ```{r pyramid plot 1, eval=FALSE, include=FALSE}
 cw_1_5 <- full_join(na_1_tokenized, na_3_tokenized, by = "words") 
