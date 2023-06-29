@@ -19,7 +19,7 @@ library(quanteda.textplots) # allows us to make network plots
 library(gridExtra) # allows us to combine multiple plots into 1
 library(wordcloud) # allows us to generate word clouds
 library(fmsb)
-library(plotly)
+library(plotly) #interactive ggplot graphs
 library(ggthemes) # more themes for ggplot
 library(tm) #for textmining corpus(), removePunctuation()
 library(syuzhet) # for sentiment analysis, getNrc()
@@ -169,6 +169,28 @@ feat <- names(topfeatures(fcmat, 30))
 
 fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.5, edge_color = "#7BCCC4")
+```
+Create bigram
+```{r}
+na_3_claims <- na_3 %>% 
+  select(text)
+
+ngrams_3 <- na_3_claims %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+ngrams_3 <- ngrams_3 %>% 
+ separate(bigram, c("word1", "word2"), sep = " ")
+
+ngrams_3 <- ngrams_3 %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+         filter(!word2 %in% stop_words$word)
+
+ngrams_3 <- ngrams_3 %>% 
+  unite(bigrams, word1, word2, sep = " ")
+
+ngrams_3 <- ngrams_3 %>% 
+  count(bigrams, sort = TRUE)
+
 ```
 
 ```{r Bigram 3 FC}
