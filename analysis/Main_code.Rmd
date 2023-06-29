@@ -88,7 +88,6 @@ wordcloud(na_1_tokenized$words, freq = na_1_tokenized$n, max.words = 200, min.fr
 #brewer.pal(9, "GnBu")
 ```
 
-
 ```{r Frequencey Matrix 1}
 na_1_corpus <- corpus(na_1$text)
 
@@ -152,7 +151,7 @@ ggplot(na_1_sentiment_score, aes(x = sentiment, y = score)) +
 
 
 #Super Claim 3 Climate Impacts Not Bad
-FIlter() for super claim 3
+Filter() for super claim 3
 ```{r}
 na_3 <- nature_analysis %>%
   filter(str_detect(claim, "3_"))
@@ -571,16 +570,16 @@ plot.subtitle = element_text(hjust = 0.5))+
 
 #Word Cloud
 ```{r Bigram Cloud 1, warning=FALSE}
-wordcloud(ngrams_1$bigram, freq = na_1_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = c("royalblue1","seagreen2", "orangered"), family = "Avenir")
+wordcloud(ngrams_1$bigram, freq = ngrams_1$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = c("royalblue1","seagreen2", "orangered"), family = "Avenir")
 ```
 
 ```{r Bigram Cloud 3, warning=FALSE}
-wordcloud(ngrams_3$bigrams, freq = na_3_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = c("royalblue1","seagreen2", "orangered"), family = "Avenir")
+wordcloud(ngrams_3$bigrams, freq = ngrams_3$n, max.words = 200, min.freq = 5, random.order = FALSE, colors = c("royalblue1","seagreen2", "orangered"), family = "Avenir")
 
 ```
 
 ```{r Bigram Cloud 5, warning=FALSE}
-wordcloud(ngrams_5$bigram, freq = na_5_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
+wordcloud(ngrams_5$bigram, freq = ngrams_5$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
 
 ```
 
@@ -593,9 +592,27 @@ wordcloud(ngrams_5_1$bigram, freq = na_5_1_tokenized$n, max.words = 200, min.fre
 wordcloud(ngrams_5_2$bigram, freq = na_5_2_tokenized$n, max.words = 200, min.freq = 5, random.order = FALSE, color = brewer.pal(8, "GnBu"), family = "Avenir")
 ```
 
+#Bigram Frequencey Correlation
+```{r Bigram 3 FC}
+ngrams_3_corpus <- corpus(ngrams_3$bigrams)
+
+toks <- na_3_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5)
+```
+
 #Pyramid Plot
 ```{r Pyramid Plot Claims 1 & 3}
-pyramid.plot(na_1_sentiment_score$score, na_3_sentiment_score$score, labels = na_1_sentiment_score$sentiment, main = "Sentiment Comparison for Claims 1 & 3", gap = 250, top.labels = c("Super Claim 1: CC is Not Happening", "Sentiment", "Super Claim 3: CC is Not Bad"), show.values = TRUE, unit = "Score")
+pyramid.plot(na_1_sentiment_score$score, na_3_sentiment_score$score, labels = na_1_sentiment_score$sentiment, main = "Sentiment Comparison for Claims 1 & 3", gap = 300, top.labels = c("Super Claim 1: CC is Not Happening", "Sentiment", "Super Claim 3: CC is Not Bad"), show.values = TRUE, unit = "Score")
 ```
 
 ```{r Pyramid Plot Claims 1 & 5}
@@ -625,8 +642,6 @@ pyramid.plot(sentiment_1_3$Score, na_5_claims_sentiment_score$score, labels = na
 ```{r Pyramid Plot 5_1 & 5_2}
 pyramid.plot(na_5_1_claims_sentiment_score$score, na_5_2_claims_sentiment_score$score, labels = na_5_1_claims_sentiment_score$sentiment, main = "Sentiment Comparison for Super Claim 5", top.labels = c("Super Claim 5_1:Science is Unreliable", "Sentiment", "Super Claim 5_2:Movement is Unreliable"), gap = 450, show.values = TRUE, unit = "Score")
 ```
-
-
 
 ```{r pyramid plot 1, eval=FALSE, include=FALSE}
 cw_1_5 <- full_join(na_1_tokenized, na_3_tokenized, by = "words") 
