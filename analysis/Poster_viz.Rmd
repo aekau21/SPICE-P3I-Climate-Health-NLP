@@ -34,6 +34,8 @@ nature_analysis <- read_csv(here("data/training.csv"))
 ```
 
 #Visual 1
+Filter() to select Super-claims 1, 3, & 5
+Select() text columns
 ```{r}
 na_1 <- nature_analysis %>%
   filter(str_detect(claim, "1_"))
@@ -50,6 +52,10 @@ na_5_claims <- na_5 %>%
   select(text)
 
 ```
+
+Change classes using as.character() to create a vector
+Get sentiment scores using get_nrc_sentiment()
+Use data.frame() and colSums() to create a sentiment data frame
 
 ```{r}
 #Sentiment 1 Prep
@@ -84,6 +90,8 @@ na_5_claims_sentiment_score <- cbind("sentiment" = rownames(na_5_claims_sentimen
 
 ```
 
+Use full_join() to combine the sentiment score data frames together into one data frame
+rename() the new columns
 ```{r}
 united_sent_score <- full_join(na_1_sentiment_score, na_3_sentiment_score, by = "sentiment") %>% 
   full_join(na_5_claims_sentiment_score, by = "sentiment") %>% rename(claim_1 = score.x, claim_3 = score.y, claim_5 = score) #%>% 
@@ -92,36 +100,20 @@ united_sent_score <- full_join(na_1_sentiment_score, na_3_sentiment_score, by = 
 ```
 
 ```{r Sentiment Distribution}
-ggplot(united_sent_score, aes(x = sentiment)) +
+sd <- ggplot(united_sent_score, aes(x = sentiment)) +
   geom_col(aes(y = claim_5, fill = "claim_5"), position = "stack") +
   geom_col(aes(y = claim_1, fill = "claim_1"), position = "stack") +
   geom_col(aes(y = claim_3, fill = "claim_3"), position = "stack") +
-  #coord_flip() +
-  #theme_wsj() +
   theme_minimal()+
   scale_fill_manual(values = c("claim_5" = "#08589E", "claim_1" = "#4EB3D3", "claim_3" = "#A8DDB5")) +
-  #scale_fill_manual(values = c("claim_5" = "#FF7F0E", "claim_1" = "#2CA02C", "claim_3" = "#1F77B4")) +
   theme(text = element_text(family = "Arial", size = 21), axis.text.y = element_text(family = "Arial", size = 21), axis.title = element_text(family = "Arial", size = 30), plot.title = element_text(hjust = 0.5),
 plot.subtitle = element_text(hjust = 0.5))+
   labs(x = "Sentiment", y = "Score", title = "Sentiment Scores", subtitle = "Super Claims 1, 3, & 5", fill = "Claim")
+
+ggplotly(sd)
 ```
 
 #Visual 2
-```{r}
-na_1_tokenized <- na_1 %>% 
-  unnest_tokens(words, text)
-
-na_1_tokenized <- na_1_tokenized %>% 
-  count(words) %>% 
-  arrange(desc(n))
-
-na_1_tokenized <- na_1_tokenized %>% 
-  filter(!words %in% stopwords("english"))
-
-na_1_wc <- na_1_tokenized %>% 
-  select(words)
-
-```
 
 ```{r}
 na_5_claims <- na_5 %>% 
@@ -152,11 +144,11 @@ color_palette <- brewer.pal(9, "GnBu")
 dark_color_palette <- sapply(color_palette, function(color) {
   rgb <- col2rgb(color)
   darker_rgb <- rgb * .8
-  rgb(darker_rgb[1], darker_rgb[2], darker_rgb[3], maxColorValue = 255)
+  rgb(darker_rgb[1], darker_rgb[2], darker_rgb[3], maxColorValue = 300)
 })
 
 # Use the modified color palette in the wordcloud function
-wordcloud(ngrams_5$bigram, freq = na_5_tokenized$n, max.words = 200, min.freq = 5, 
+wordcloud(ngrams_5$bigram, freq = ngrams_5$n, max.words = 200, min.freq = 5, 
           random.order = FALSE, colors = dark_color_palette, family = "Avenir")
 
 ```
@@ -179,9 +171,32 @@ fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.5, edge_color = "#7BCCC4")
 ```
 
+```{r Bigram 3 FC}
+ngrams_3_corpus <- corpus(ngrams_3$bigrams)
+
+toks <- na_3_corpus %>%
+    tokens(remove_punct = TRUE) %>%
+    tokens_tolower() %>%
+    tokens_remove(pattern = stopwords("english"), padding = FALSE)
+
+
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+
+feat <- names(topfeatures(fcmat, 30))
+
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.5, edge_color = "#7BCCC4")
+
+```
+
 #Visual 4
+Created a color vector
+```{r}
+color <- c("#08589E", "#4EB3D3", "#A8DDB5")
+```
+
 ```{r Pyramid Plot 1&3}
-pyramid.plot(na_1_sentiment_score$score, na_3_sentiment_score$score, labels = na_1_sentiment_score$sentiment, main = "Sentiment Comparison for Claims 1 & 3", gap = 250, top.labels = c("Super Claim 1: CC is Not Happening", "Sentiment", "Super Claim 3: CC is Not Bad"), show.values = TRUE, unit = "Score")
+pyramid.plot(na_1_sentiment_score$score, na_3_sentiment_score$score, labels = na_1_sentiment_score$sentiment, main = "Sentiment Comparison for Claims 1 & 3", gap = 250, top.labels = c("Super Claim 1: CC is Not Happening", "Sentiment", "Super Claim 3: CC is Not Bad"), show.values = TRUE, unit = "Score", ppmar = c(8,4,8,4), lxcol = brewer.pal(5, "YlGnBu"), rxcol = brewer.pal(5, "YlGnBu"))
 ```
 
 
