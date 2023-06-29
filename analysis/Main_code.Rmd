@@ -1,10 +1,10 @@
 ---
-title: "FP Draft 1"
-author: "Anson"
+title: "Climate Misinformation Media Sentiment Analysis and NLP"
+author: "Anson Ekau"
 date: "2023-06-14"
 output:
-  html_document: default
-  pdf_document: default
+  html_document:
+  code_download: TRUE
 ---
 Goal: Compare super claims 1, 3, and 5. 
 1 : Not Happening 
